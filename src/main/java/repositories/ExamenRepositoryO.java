@@ -16,4 +16,9 @@ public class ExamenRepositoryO implements ExamenRepository{
         }
         return null;
     }
+
+    @Override
+    public Examen guardar(Examen examen) {
+        return null;
+    }
 }
