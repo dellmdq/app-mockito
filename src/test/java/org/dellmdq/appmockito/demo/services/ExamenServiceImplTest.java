@@ -332,4 +332,83 @@ class ExamenServiceImplTest {
         verify(preguntaRepositoryImpl).findPreguntasPorExamenId(anyLong());//llamada al mock
 
     }
+
+    @Test
+    void invocationOrder() {
+        when(examenRepositoryImpl2.findAll()).thenReturn(Datos.EXAMENES);
+
+        examenServiceImpl.findExamenPorNombreConPreguntas("Matemáticas");
+        examenServiceImpl.findExamenPorNombreConPreguntas("Lenguaje");
+
+        InOrder inOrder = inOrder(preguntaRepositoryImpl);
+        //inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(6L);//fallará ya que se invocó 1ro matemáticas con id 5L
+        //inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(5L);
+
+        inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(5L);//es no fallará porque es el orden correcto
+        inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(6L);
+
+    }
+    /**Lets check order method with multiple params as args*/
+    @Test
+    void invocationOrder2() {
+        when(examenRepositoryImpl2.findAll()).thenReturn(Datos.EXAMENES);
+
+        examenServiceImpl.findExamenPorNombreConPreguntas("Matemáticas");//(1)
+        examenServiceImpl.findExamenPorNombreConPreguntas("Lenguaje");//(2)
+
+        InOrder inOrder = inOrder(preguntaRepositoryImpl, examenRepositoryImpl2);
+        //estos dos inorden corresponden al find de "matematicas" (1)
+        inOrder.verify(examenRepositoryImpl2).findAll();
+        inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(5L);
+
+        //estos dos inorder corresponde al verify de "lenguaje" (2)
+        inOrder.verify(examenRepositoryImpl2).findAll();
+        inOrder.verify(preguntaRepositoryImpl).findPreguntasPorExamenId(6L);
+
+    }
+
+    /**Todas las formas de verificar la cantidad de veces que se invoca un método.*/
+    @Test
+    void invocationRepetitionNumber(){
+        when(examenRepositoryImpl2.findAll()).thenReturn(Datos.EXAMENES);
+        examenServiceImpl.findExamenPorNombreConPreguntas("Matemáticas");
+
+        verify(preguntaRepositoryImpl).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, times(1)).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atLeast(1)).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atLeastOnce()).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atMost(1)).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atMostOnce()).findPreguntasPorExamenId(5L);
+    }
+
+    @Test
+    void invocationRepetitionNumber2(){
+        when(examenRepositoryImpl2.findAll()).thenReturn(Datos.EXAMENES);
+        examenServiceImpl.findExamenPorNombreConPreguntas("Matemáticas");
+
+        /*modificamos la findExamenPorNombreConPreguntas para que invoque dos veces findPreguntasPorExamenId */
+       // verify(preguntaRepositoryImpl).findPreguntasPorExamenId(5L);falla invocado dos veces
+        verify(preguntaRepositoryImpl, times(2)).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atLeast(1)).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atLeastOnce()).findPreguntasPorExamenId(5L);
+        verify(preguntaRepositoryImpl, atMost(2)).findPreguntasPorExamenId(5L);
+       // verify(preguntaRepositoryImpl, atMostOnce()).findPreguntasPorExamenId(5L); // falla invocado 2 veces
+    }
+
+    @Test
+    void invocationRepetitionNumber3(){
+        when(examenRepositoryImpl2.findAll()).thenReturn(Collections.emptyList());
+        examenServiceImpl.findExamenPorNombreConPreguntas("Matemáticas");
+
+        verify(preguntaRepositoryImpl, never()).findPreguntasPorExamenId(5L);
+        verifyNoInteractions(preguntaRepositoryImpl);
+
+        verify(examenRepositoryImpl2).findAll();
+        verify(examenRepositoryImpl2, times(1)).findAll();
+        verify(examenRepositoryImpl2, atLeast(1)).findAll();
+        verify(examenRepositoryImpl2, atLeastOnce()).findAll();
+        verify(examenRepositoryImpl2, atMost(10)).findAll();
+        verify(examenRepositoryImpl2, atMostOnce()).findAll();
+
+    }
 }
